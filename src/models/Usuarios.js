@@ -5,10 +5,10 @@ const usuariosSchema = new Schema(
         nombre: {
             type: String
         },
-        apellido: {
+        email: {
             type: String
         },
-        telefono: {
+        password: {
             type: Number
         }
     },
