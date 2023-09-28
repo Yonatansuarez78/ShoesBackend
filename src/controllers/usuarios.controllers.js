@@ -1,4 +1,6 @@
 import Usuarios from '../models/Usuarios.js';
+import bcryptjs from 'bcryptjs'
+import {createAcessToken} from '../libs/jwt.js'
 
 export const welcome = async () => {
     try {
@@ -9,7 +11,7 @@ export const welcome = async () => {
     }
 }
 
-export const verUsuarios = async(req, res)=>{
+export const verUsuarios = async (req, res) => {
     try {
         const usuarios = await Usuarios.find().lean()
         res.status(200).json(usuarios);
@@ -19,7 +21,7 @@ export const verUsuarios = async(req, res)=>{
     }
 }
 
-export const verUsuarioUnico = async(req, res)=>{
+export const verUsuarioUnico = async (req, res) => {
     try {
         const { id } = req.params;
         const usuarioUnico = await Usuarios.findById(id).lean()
@@ -30,18 +32,69 @@ export const verUsuarioUnico = async(req, res)=>{
     }
 }
 
-export const crearUsuario = async (req, res)=>{
+export const login = async(req, res) => {
+    const { email, password } = req.body
     try {
-        const usuarioModel = Usuarios(req.body);
-        const usuarioSave = await usuarioModel.save()
-        res.status(200).json(usuarioSave);
+        const userFound = await Usuarios.findOne({email})
+        if(!userFound) res.status(400).json({message: "Usuario invalido"})
+
+        const isMatch = await bcryptjs.compare(password, userFound.password)
+        if (!isMatch) res.status(400).json({ message: "Contraseña invalida"})
+        
+        const token = await createAcessToken({ id: userFound._id })
+
+        res.cookie('token', token)
+        res.json({
+            id: userFound._id,
+            nombre: userFound.nombre,
+            email: userFound.email,
+            icreatedAtd: userFound.createdAt,
+            updatedAt: userFound.updatedAt
+        })
     } catch (error) {
         console.log(error);
         res.status(500).json(error);
     }
 }
 
-export const actualizarUsuario = async (req, res)=>{
+
+export const crearUsuario = async (req, res) => {
+    const { nombre, email, password } = req.body
+    try {
+        const passwordHash = await bcryptjs.hash(password, 10)
+        const newUser = new Usuarios({
+            nombre, email, password: passwordHash,
+        });
+        const userSaved = await newUser.save()
+        const token = await createAcessToken({id: userSaved._id})
+         
+        res.cookie('token', token)
+        res.json({
+            id: userSaved._id,
+            nombre: userSaved.nombre,
+            email: userSaved.email,
+            icreatedAtd: userSaved.createdAt,
+            updatedAt: userSaved.updatedAt
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json(error);
+    }
+}
+
+export const logout = (req, res) => {
+    res.cookie("token", " ", {
+        expires: new Date(0)
+    })
+    return res.sendStatus(200)
+}
+
+export const profile = (req, res) => {
+    console.log(req.user)
+    res.send("profile")
+}
+
+export const actualizarUsuario = async (req, res) => {
     try {
         const { id } = req.params;
         const usuarioActu = await Usuarios.findByIdAndUpdate(id, req.body);
@@ -52,7 +105,7 @@ export const actualizarUsuario = async (req, res)=>{
     }
 }
 
-export const eliminarUsuario = async (req, res)=>{
+export const eliminarUsuario = async (req, res) => {
     try {
         const { id } = req.params;
         const usuarioElemi = await Usuarios.findByIdAndDelete(id);

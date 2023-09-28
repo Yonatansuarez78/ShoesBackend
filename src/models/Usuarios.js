@@ -3,18 +3,28 @@ import { Schema, model } from 'mongoose';
 const usuariosSchema = new Schema(
     {
         nombre: {
-            type: String
+            type: String,
+            required: true,
+            trim: true
         },
         email: {
-            type: String
+            type: String,
+            required: true,
+            trim: true,
+            unique: true
         },
         password: {
-            type: Number
+            type: String,
+            required: true,
+            trim: true
         }
     },
+    //  { 
+    //     versionKey: false 
+    // }, 
     {
-        versionKey: false
-    }
+         timestamps: true
+     }
 )
 
 export default model("Usuarios", usuariosSchema);
