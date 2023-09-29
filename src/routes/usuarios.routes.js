@@ -12,7 +12,7 @@ router.post("/register", crearUsuario);
 router.post("/login", login);
 router.post("/logout", logout);
 
-router.get("/profile", authRequired, profile);
+router.post("/profile", authRequired, login);
 
 router.put("/usuarios/:id", actualizarUsuario);
 router.delete("/usuarios/:id", eliminarUsuario);

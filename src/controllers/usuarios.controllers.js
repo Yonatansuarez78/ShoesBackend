@@ -1,6 +1,6 @@
 import Usuarios from '../models/Usuarios.js';
 import bcryptjs from 'bcryptjs'
-import {createAcessToken} from '../libs/jwt.js'
+import { createAcessToken } from '../libs/jwt.js'
 
 export const welcome = async () => {
     try {
@@ -32,15 +32,15 @@ export const verUsuarioUnico = async (req, res) => {
     }
 }
 
-export const login = async(req, res) => {
+export const login = async (req, res) => {
     const { email, password } = req.body
     try {
-        const userFound = await Usuarios.findOne({email})
-        if(!userFound) res.status(400).json({message: "Usuario invalido"})
+        const userFound = await Usuarios.findOne({ email })
+        if (!userFound) res.status(400).json({ message: "Usuario invalido" })
 
         const isMatch = await bcryptjs.compare(password, userFound.password)
-        if (!isMatch) res.status(400).json({ message: "Contraseña invalida"})
-        
+        if (!isMatch) res.status(400).json({ message: "Contraseña invalida" })
+
         const token = await createAcessToken({ id: userFound._id })
 
         res.cookie('token', token)
@@ -66,8 +66,8 @@ export const crearUsuario = async (req, res) => {
             nombre, email, password: passwordHash,
         });
         const userSaved = await newUser.save()
-        const token = await createAcessToken({id: userSaved._id})
-         
+        const token = await createAcessToken({ id: userSaved._id })
+
         res.cookie('token', token)
         res.json({
             id: userSaved._id,
@@ -89,8 +89,16 @@ export const logout = (req, res) => {
     return res.sendStatus(200)
 }
 
-export const profile = (req, res) => {
-    console.log(req.user)
+export const profile = async (req, res) => {
+    const userFound = await Usuarios.findById(req.user.id)
+    if (!userFound) res.status(400).json({ message: "usuario no encontrado" })
+    return res.json({
+        id: userFound._id,
+        username: userFound.username,
+        email: userFound.email,
+        createdAt: userFound.createdAt,
+        updatedAt: userFound.updatedAt
+    })
     res.send("profile")
 }
 
